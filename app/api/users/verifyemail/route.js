@@ -14,7 +14,7 @@ export async function POST(req){
             verifyToken: token,
             verifyTokenExpiry: {$gt: Date.now()}
         }
-        )
+     )
 
         if(!user){
             return NextResponse.json({error: "Invalid Token"}, {status: 400})

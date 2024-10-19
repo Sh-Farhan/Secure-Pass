@@ -62,7 +62,7 @@ const Navbar = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <Link href='/profile'>Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Settings className="mr-2 h-4 w-4" />
