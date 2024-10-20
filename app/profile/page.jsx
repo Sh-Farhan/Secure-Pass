@@ -1,5 +1,7 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, Lock, AlertCircle } from "lucide-react"
 
 const ProfilePage = () => {
+  const router = useRouter()
   const [name, setName] = useState('John Doe')
   const [email, setEmail] = useState('john.doe@example.com')
   const [currentPassword, setCurrentPassword] = useState('')
@@ -49,6 +52,22 @@ const ProfilePage = () => {
     setNewPassword('')
     setConfirmPassword('')
   }
+
+  const getDetails = async () => {
+    try {
+      const response = await axios.post("/api/users/me")
+      console.log(response.data.data)
+      const {email,username} = response.data.data;
+      setEmail(email);
+      setName(username);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    getDetails();
+  }, [])
 
   return (
     <div className="container mx-auto px-4 py-8">

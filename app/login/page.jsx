@@ -8,8 +8,11 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import React from 'react'
+import { useRouter } from 'next/navigation'
+import axios from 'axios'
 
 const page = () => {
+  const router = useRouter();
   const [user,setUser] = useState({email: "", password: ""});
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -25,6 +28,14 @@ const page = () => {
     if (!user.email || !user.password) {
       setError('Email and password are required')
       return
+    }
+
+    try {
+      const response = await axios.post("/api/users/login", user);
+      console.log("Login successfull")
+      router.push("/profile")
+    } catch (error) {
+      console.log(error, error.message)
     }
   }
 
