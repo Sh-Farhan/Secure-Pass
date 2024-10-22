@@ -79,6 +79,7 @@
 // pages/api/users.js
 import { NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
+import jwt from "jsonwebtoken"
 
 const url = process.env.MONGODB_URI;
 const client = new MongoClient(url);
@@ -96,15 +97,28 @@ async function connectToDatabase() {
 
 export const GET = async (req) => {
   try {
-    const { searchParams } = new URL(req.url);
-    const user = searchParams.get('user');
+    const token = req.cookies.get("token")?.value || ""; 
+    const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
+    console.log(decodedToken)
 
+    if(!token){
+      return NextResponse.json(
+        {error: 'Not authenticated'}
+      )
+    }
+
+    // const { searchParams } = new URL(req.url);
+    // const user = searchParams.get('user');
+    const user = decodedToken.username
+
+    
     if (!user) {
       return NextResponse.json(
         { error: 'User parameter is required' },
         { status: 400 }
       );
     }
+
 
     const db = await connectToDatabase();
     const collection = db.collection(user);
@@ -119,3 +133,39 @@ export const GET = async (req) => {
     );
   }
 };
+
+export const POST = async (req) => {
+  try {
+    const token = req.cookies.get("token")?.value || ""; 
+    const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
+    console.log(decodedToken)
+
+    if(!token){
+      return NextResponse.json(
+        {error: 'Not authenticated'}
+      )
+    }
+    
+    const user = decodedToken.username;
+
+    const data = await req.json();
+    console.log("user is the query is")
+
+    console.log(data)
+
+
+    const db = await connectToDatabase();
+    const collection = db.collection(user);
+    const result = await collection.insertOne(data);
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return NextResponse.json(
+      { error: 'Error in fetching users: ' + error.message },
+      { status: 500 }
+    );
+  }
+};
+
+

@@ -1,5 +1,7 @@
 "use client"
+
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Lock, PlusCircle, Search } from "lucide-react";
 
-// Add this CSS for custom scrollbar
+// Scrollbar styles
 const scrollbarStyles = `
   .custom-scrollbar {
     scrollbar-width: thin;
@@ -34,38 +36,35 @@ const scrollbarStyles = `
   }
 `;
 
-// Basic encryption function (for demonstration purposes only)
-const encrypt = (text) => btoa(text);
-const decrypt = (text) => atob(text);
-
 const EnhancedPasswordManagerDashboard = () => {
   const [passwords, setPasswords] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showPasswordId, setShowPasswordId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPassword, setEditingPassword] = useState(null);
-  const [newPassword, setNewPassword] = useState({ website: "", username: "", password: "" });
+  const [newPassword, setNewPassword] = useState({ site: "", username: "", password: "" });
 
   useEffect(() => {
-    const storedPasswords = localStorage.getItem("passwords");
-    if (storedPasswords) {
-      setPasswords(JSON.parse(storedPasswords).map((pw) => ({
-        ...pw,
-        password: decrypt(pw.password)
-      })));
-    }
+    fetchPasswords();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("passwords", JSON.stringify(passwords.map(pw => ({
-      ...pw,
-      password: encrypt(pw.password)
-    }))));
-  }, [passwords]);
+  const fetchPasswords = async () => {
+    try {
+      const response = await fetch('/api/users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch passwords');
+      }
+      const data = await response.json();
+      setPasswords(data);
+    } catch (error) {
+      console.error('Error fetching passwords:', error);
+      // Handle error (e.g., show error message to user)
+    }
+  };
 
   const filteredPasswords = passwords.filter(
     (pw) =>
-      pw.website.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pw.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pw.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -73,15 +72,40 @@ const EnhancedPasswordManagerDashboard = () => {
     setShowPasswordId(showPasswordId === id ? null : id);
   };
 
-  const handleAddEditPassword = () => {
-    if (editingPassword) {
-      setPasswords(passwords.map(pw => pw.id === editingPassword.id ? { ...newPassword, id: editingPassword.id } : pw));
-    } else {
-      setPasswords([...passwords, { ...newPassword, id: Date.now() }]);
+  const handleAddEditPassword = async () => {
+    try {
+      let response;
+      if (editingPassword) {
+        response = await fetch(`/api/users/${editingPassword.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newPassword),
+        });
+      } else {
+        // response = await fetch('/api/users', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify(newPassword),
+        // });
+        response = await axios.post('/api/users', newPassword)
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to save password');
+      }
+
+      await fetchPasswords(); // Refresh the password list
+      setIsModalOpen(false);
+      setEditingPassword(null);
+      setNewPassword({ site: "", username: "", password: "" });
+    } catch (error) {
+      console.error('Error saving password:', error);
+      // Handle error (e.g., show error message to user)
     }
-    setIsModalOpen(false);
-    setEditingPassword(null);
-    setNewPassword({ website: "", username: "", password: "" });
   };
 
   const handleEditPassword = (password) => {
@@ -90,8 +114,21 @@ const EnhancedPasswordManagerDashboard = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeletePassword = (id) => {
-    setPasswords(passwords.filter((pw) => pw.id !== id));
+  const handleDeletePassword = async (id) => {
+    try {
+      const response = await fetch(`/api/users/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete password');
+      }
+
+      await fetchPasswords(); // Refresh the password list
+    } catch (error) {
+      console.error('Error deleting password:', error);
+      // Handle error (e.g., show error message to user)
+    }
   };
 
   const getPasswordStrength = (password) => {
@@ -134,7 +171,7 @@ const EnhancedPasswordManagerDashboard = () => {
           <TableBody>
             {filteredPasswords.map((pw) => (
               <TableRow key={pw.id}>
-                <TableCell>{pw.website}</TableCell>
+                <TableCell>{pw.site}</TableCell>
                 <TableCell>{pw.username}</TableCell>
                 <TableCell>
                   <div className="flex items-center">
@@ -185,13 +222,13 @@ const EnhancedPasswordManagerDashboard = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="website" className="text-right">
+              <Label htmlFor="site" className="text-right">
                 Website
               </Label>
               <Input
-                id="website"
-                value={newPassword.website}
-                onChange={(e) => setNewPassword({ ...newPassword, website: e.target.value })}
+                id="site"
+                value={newPassword.site}
+                onChange={(e) => setNewPassword({ ...newPassword, site: e.target.value })}
                 className="col-span-3"
               />
             </div>
