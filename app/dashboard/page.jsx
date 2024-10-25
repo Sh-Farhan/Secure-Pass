@@ -75,8 +75,11 @@ const EnhancedPasswordManagerDashboard = () => {
   const handleAddEditPassword = async () => {
     try {
       let response;
+      console.log(editingPassword)
+      console.log(newPassword)
+
       if (editingPassword) {
-        response = await fetch(`/api/users/${editingPassword.id}`, {
+        response = await fetch('/api/users', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -84,14 +87,14 @@ const EnhancedPasswordManagerDashboard = () => {
           body: JSON.stringify(newPassword),
         });
       } else {
-        // response = await fetch('/api/users', {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify(newPassword),
-        // });
-        response = await axios.post('/api/users', newPassword)
+        response = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newPassword),
+        });
+        // response = await axios.post('/api/users', newPassword)
       }
 
       if (!response.ok) {
@@ -109,16 +112,29 @@ const EnhancedPasswordManagerDashboard = () => {
   };
 
   const handleEditPassword = (password) => {
+    console.log(password)
     setEditingPassword(password);
     setNewPassword(password);
     setIsModalOpen(true);
   };
 
   const handleDeletePassword = async (id) => {
+    console.log("Deleting password with ID:", id);
+
+
+    const toDeletePassword = passwords.filter((pw) => pw._id === id)[0]
+    const {site,username,password} = toDeletePassword
+
     try {
-      const response = await fetch(`/api/users/${id}`, {
+      const response = await fetch('/api/users', {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({site,username,password})
+        // body: toDeletePassword
       });
+      // const reponse = await axios.delete('/api/users', toDeletePassword)
 
       if (!response.ok) {
         throw new Error('Failed to delete password');
@@ -203,7 +219,7 @@ const EnhancedPasswordManagerDashboard = () => {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDeletePassword(pw.id)}
+                      onClick={() => handleDeletePassword(pw._id)}
                     >
                       Delete
                     </Button>

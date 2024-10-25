@@ -80,6 +80,7 @@
 import { NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
 import jwt from "jsonwebtoken"
+import { ObjectId } from 'mongodb';
 
 const url = process.env.MONGODB_URI;
 const client = new MongoClient(url);
@@ -168,4 +169,125 @@ export const POST = async (req) => {
   }
 };
 
+export const DELETE = async(req) => {
+  try {
+    const token = req.cookies.get("token")?.value || ""; 
+    const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
+    console.log(decodedToken)
 
+    if(!token){
+      return NextResponse.json(
+        {error: 'Not authenticated'}
+      )
+    }
+
+    const user = decodedToken.username;
+    console.log(user)
+    const db = await connectToDatabase();
+    const collection = db.collection(user);
+
+    const data = await req.json();
+    console.log(data)
+
+    const result = await collection.deleteOne(data);
+    console.log(result)
+
+    return NextResponse.json(
+      {success: true, Result: result}
+    )
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return NextResponse.json(
+      { error: 'Error in fetching users: ' + error.message },
+      { status: 500 }
+    );
+  }
+}
+
+const updateDocumentById = async (collection, data) => {
+  try {
+    const id = new ObjectId(data._id); // Convert the ID to ObjectId
+    const result = await collection.updateOne(
+      { _id: id }, // Filter by ID
+      {
+        $set: {
+          site: data.site,
+          username: data.username,
+          password: data.password,
+        },
+      }
+    );
+
+    return {
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+    };
+  } catch (error) {
+    console.error('Error updating document:', error);
+    throw new Error('Update failed');
+  }
+};
+
+
+// export const PUT = async(req) => {
+//   try {
+//     const token = req.cookies.get("token")?.value || ""; 
+//     const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
+//     console.log(decodedToken)
+
+//     if(!token){
+//       return NextResponse.json(
+//         {error: 'Not authenticated'}
+//       )
+//     }
+    
+//     const user = decodedToken.username;
+
+//     const data = await req.json();
+//     console.log(data)
+
+//     const db = await connectToDatabase();
+//     const collection = db.collection(user);
+
+    
+//     const result = await updateDocumentById(collection, data);
+
+
+//     return NextResponse.json(result, { status: 200 });
+
+//   } catch (error) {
+//     console.log(error.message)
+//     return NextResponse.json(
+//       { error: 'Error in fetching users: ' + error.message },
+//       { status: 500 })
+//   }
+// }
+
+export const PUT = async (req) => {
+  try {
+    const token = req.cookies.get("token")?.value || ""; 
+    const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
+    console.log(decodedToken);
+
+    if (!token) {
+      return NextResponse.json({ error: 'Not authenticated' });
+    }
+
+    const user = decodedToken.username;
+    const data = await req.json();
+    console.log(data);
+
+    const db = await connectToDatabase();
+    const collection = db.collection(user);
+    
+    const result = await updateDocumentById(collection, data);
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    console.log(error.message);
+    return NextResponse.json(
+      { error: 'Error in fetching users: ' + error.message },
+      { status: 500 }
+    );
+  }
+};
