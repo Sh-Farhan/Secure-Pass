@@ -11,7 +11,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 
-const page = () => {
+const Page = () => {
   const router = useRouter();
   const [user,setUser] = useState({email: "", password: ""});
   const [showPassword, setShowPassword] = useState(false)
@@ -108,4 +108,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

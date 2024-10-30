@@ -180,6 +180,8 @@ const NavItems = React.memo(() => (
   </>
 ))
 
+NavItems.displayName = 'NavItems';
+
 export default function Navbar() {
   const router = useRouter()
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' })
