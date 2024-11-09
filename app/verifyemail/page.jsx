@@ -87,7 +87,7 @@ import { CheckCircle, XCircle } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation' // Adjust import
 import axios from 'axios'
 
- function Component() {
+function Component() {
     const router = useRouter();
     const searchParams = useSearchParams(); // Use this to get query params
 
@@ -104,7 +104,9 @@ import axios from 'axios'
             await axios.post("/api/users/verifyemail", { token })
             setIsVerified(true)
         } catch (error) {
-            setError(error.response?.data || "An error occurred");
+            // Extract a meaningful error message
+            const errorMessage = error.response?.data?.error || "An error occurred"; // Assuming the error object has a key 'error'
+            setError(errorMessage);
             console.log(error.response?.data);
         }
     }
@@ -144,7 +146,7 @@ import axios from 'axios'
                     {error && (
                         <div className="mt-4 flex items-center justify-center text-red-500">
                             <XCircle className="mr-2" />
-                            <span>{error}</span>
+                            <span>{error}</span> {/* Ensure this is a string */}
                         </div>
                     )}
                 </CardContent>
@@ -162,4 +164,4 @@ const Page = () => {
     );
 };
 
-export default Page;
+export default Page; // Single default export
